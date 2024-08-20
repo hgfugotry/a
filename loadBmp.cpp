@@ -1,27 +1,28 @@
-#include "loadBmp.h"
+#include"loadBmp.h"
 #include<fstream>
 #include<iostream>
 #include<new>
 
-#define DEBUG
+#define NODEBUG
 
 #ifdef DEBUG
 int main()
 {
-    std::ifstream fin("1.bmp");
+    std::ifstream fin("../1.bmp");
     BMP clr(fin);
     unsigned char* temp=(unsigned char*)clr.color;
-    for(int i=0;i<clr.bih.biSizeImage/1.5;i+=3)
-    {
-        temp[i]=200;
-        temp[i+1]=255;
-        temp[i+2]=255;
-    }
+    std::cout<<clr.width<<" "<<clr.height<<std::endl;
+    //for(int i=0;i<clr.sizeImage/1.5;i+=3)
+    //{
+        //temp[i]=200;
+        //temp[i+1]=255;
+        //temp[i+2]=255;/
+    //
     fin.close();
-    std::fstream finout("1.bmp",std::ios_base::in|std::ios_base::out);
-    finout.seekp((uint32_t)clr.bfh.bfOffbits);
-    finout.write((char*)temp,clr.bih.biSizeImage);
-    finout.close();
+    //std::fstream finout("1.bmp",std::ios_base::in|std::ios_base::out);
+    //finout.seekp(clr.bfh.bfOffbits);
+    //finout.write((char*)temp,clr.sizeImage);
+    //finout.close();
 }
 #endif
 
@@ -50,38 +51,22 @@ BMPInfoHeader::BMPInfoHeader(std::ifstream &fin)
     fin.read((char*)(&biClrImportant),sizeof(biClrImportant));
 }
 
-BMP::BMP(std::ifstream &fin)
+void BMP::disposeColorInfo(std::ifstream & fin)
 {
-    bfh=BMPFileHeader(fin);
-    bih=BMPInfoHeader(fin);
-    color=new uint8_t[bih.biSizeImage];
+    color=new uint8_t[(uint32_t)bih.biSizeImage];
     fin.seekg((uint32_t)bfh.bfOffbits);
     fin.read((char*)color,bih.biSizeImage);
-    width=bih.biWidth;
-    height=bih.biHeight;
 }
 
-BMP::BMP(const BMP & b)
+BMP::BMP(std::ifstream &fin)
 {
-    bfh=b.bfh;
-    bih=b.bih;
-    color=new uint8_t[bih.biSizeImage];
-    for(uint32_t i=0;i<bih.biSizeImage;i++)
-        color[i]=b.color[i];
+    if(!fin.is_open()||bih.biBitCount==1||bih.biBitCount==4||bih.biBitCount==8||bih.biCompression==1||bih.biCompression==2)
+        std::cout<<"Failed to load the image file"<<std::endl;
+    bfh=BMPFileHeader(fin);
+    bih=BMPInfoHeader(fin);
+    disposeColorInfo(fin);
     width=bih.biWidth;
     height=bih.biHeight;
-}
-
-BMP &BMP::operator=(const BMP & b)
-{
-    bfh=b.bfh;
-    bih=b.bih;
-    color=new uint8_t[bih.biSizeImage];
-    for(uint32_t i=0;i<bih.biSizeImage;i++)
-        color[i]=b.color[i];
-    width=bih.biWidth;
-    height=bih.biHeight;
-    return *this;
 }
 
 BMP::~BMP()
